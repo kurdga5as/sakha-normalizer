@@ -69,10 +69,10 @@ normalize("колодкалар баар дуо? WhatsApp-ка ыыт, ИП Ив
 
 ```bash
 # Через pip напрямую из GitHub:
-pip install git+https://github.com/Sulus-ai/sakha-normalizer.git
+pip install git+https://github.com/kurdga5as/sakha-normalizer.git
 
 # Или клонированием:
-git clone https://github.com/Sulus-ai/sakha-normalizer.git
+git clone https://github.com/kurdga5as/sakha-normalizer.git
 cd sakha-normalizer
 pip install .
 
@@ -189,10 +189,10 @@ Rule-based, pure Python standard library, no dependencies.
 
 ```bash
 # Via pip directly from GitHub:
-pip install git+https://github.com/Sulus-ai/sakha-normalizer.git
+pip install git+https://github.com/kurdga5as/sakha-normalizer.git
 
 # Or by cloning:
-git clone https://github.com/Sulus-ai/sakha-normalizer.git
+git clone https://github.com/kurdga5as/sakha-normalizer.git
 cd sakha-normalizer
 pip install .
 
