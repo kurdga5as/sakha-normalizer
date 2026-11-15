@@ -1,0 +1,10 @@
+{
+ "docs_ailabykt": 231779,
+ "held_docs": 700,
+ "docs_wiki": 12876,
+ "sah_lexicon.tsv.gz:forms": 457196,
+ "sah_lexicon.tsv.gz:tokens": 124262668,
+ "ru_lexicon.tsv.gz:forms": 72767,
+ "ru_lexicon.tsv.gz:tokens": 1723011,
+ "sah_min_freq": 5
+}
