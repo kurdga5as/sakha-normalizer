@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Нормализатор якутского письма · Sulus</title>
+<meta name="description" content="Чатовое якутское письмо → стандартная орфография: «ба5ар» → «баҕар». Для поиска, ботов и данных, не для исправления людей.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --canvas: #F4F4F5; --surface: #FFFFFF; --surface-2: #EFEFF1; --surface-3: #E4E4E7;
+    --border: rgb(10 10 14 / .10); --border-strong: rgb(10 10 14 / .20);
+    --text: #0A0A0A; --muted: #5C5C63; --faint: #66666D;
+    --accent: #2E6B3C; --accent-tint: rgb(46 107 60 / .14); --danger: #B0201A;
+    --ring: rgb(10 10 14 / .6);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --canvas: #09090A; --surface: #111112; --surface-2: #18181A; --surface-3: #202023;
+      --border: rgb(255 255 255 / .08); --border-strong: rgb(255 255 255 / .14);
+      --text: #EDEDED; --muted: #8E8E93; --faint: #808086;
+      --accent: #7CC46A; --accent-tint: rgb(124 196 106 / .16); --danger: #F2555A;
+      --ring: rgb(255 255 255 / .5);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100dvh; background: var(--canvas); color: var(--text);
+    font: 400 14px/22px Onest, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--border-strong); }
+  a:hover { text-decoration-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+  .mono { font: 500 11px/14px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 15px; }
+  .mark { width: 24px; height: 24px; border-radius: 7px; background: var(--text); color: var(--canvas); display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+  .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--surface-2); }
+  .seg button { border: 0; background: none; color: var(--muted); font: 500 12px/16px Onest, sans-serif; padding: 6px 10px; border-radius: 6px; cursor: pointer; min-height: 28px; }
+  .seg button[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
+
+  h1 { font-size: 22px; line-height: 28px; font-weight: 500; margin: 6px 0 8px; letter-spacing: -.01em; text-wrap: balance; }
+  .lead { color: var(--muted); max-width: 640px; margin: 0 0 24px; text-wrap: pretty; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; }
+  .col { padding: 20px; min-width: 0; }
+  .col + .col { border-left: 1px solid var(--border); }
+  .col label, .col .label { display: block; font-size: 13px; line-height: 20px; color: var(--muted); margin-bottom: 8px; }
+  textarea, .out {
+    display: block; width: 100%; min-height: 168px; margin: 0; padding: 12px 14px; border-radius: 8px;
+    font: 400 16px/26px Onest, system-ui, sans-serif; color: var(--text);
+  }
+  textarea { resize: vertical; background: var(--surface-2); border: 1px solid var(--border-strong); }
+  textarea::placeholder { color: var(--faint); }
+  .out { background: transparent; border: 1px solid transparent; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .out.empty { color: var(--faint); }
+  .out .w { background: var(--accent-tint); border-radius: 4px; padding: 0 1px; }
+  .out .w b { font-weight: 600; color: var(--accent); }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--border); min-height: 56px; flex-wrap: wrap; }
+  .stat { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .err { color: var(--danger); }
+  .btn { border: 1px solid var(--border-strong); background: transparent; color: var(--text); font: 500 13px/16px Onest, sans-serif; padding: 9px 16px; border-radius: 999px; cursor: pointer; min-height: 36px; transition: background-color .15s ease-out, transform .15s ease-out; }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .5; cursor: default; }
+
+  .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 40px; }
+  .examples .mono { margin-right: 4px; }
+  .chip { border: 1px solid var(--border); background: var(--surface); color: var(--text); font: 400 13px/18px Onest, sans-serif; padding: 7px 12px; border-radius: 999px; cursor: pointer; min-height: 32px; transition: background-color .15s ease-out; }
+  .chip:hover { background: var(--surface-2); }
+
+  .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: start; }
+  h2 { font-size: 16px; line-height: 24px; font-weight: 500; margin: 0 0 8px; }
+  .note p { color: var(--muted); margin: 0 0 12px; text-wrap: pretty; }
+  .note p strong { color: var(--text); font-weight: 500; }
+  .rows { margin: 16px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+  .rows li { display: grid; grid-template-columns: 132px 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .rows li span:first-child { color: var(--muted); font-size: 13px; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .metric .val { font-size: 40px; line-height: 44px; font-weight: 300; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .metric p { color: var(--muted); font-size: 13px; line-height: 20px; margin: 4px 0 0; }
+  .metrics + p { color: var(--muted); font-size: 13px; line-height: 20px; margin: 16px 0 0; }
+
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; color: var(--muted); font-size: 13px; line-height: 20px; }
+  footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+  @media (max-width: 760px) {
+    .wrap { padding-top: 16px; }
+    .cols { grid-template-columns: 1fr; }
+    .col + .col { border-left: 0; border-top: 1px solid var(--border); }
+    .col { padding: 16px; }
+    .bar { padding: 12px 16px; }
+    textarea, .out { min-height: 120px; }
+    .grid { grid-template-columns: 1fr; gap: 32px; }
+    .rows li { grid-template-columns: 1fr; gap: 2px; }
+    .examples { margin-bottom: 32px; }
+    .chip { min-height: 40px; }
+    .seg button { min-height: 36px; padding: 8px 12px; }
+    .btn { min-height: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="https://sulus.su" rel="noopener"><span class="mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true" fill="currentColor"><path d="M16 3l1.4 11.6L29 16l-11.6 1.4L16 29l-1.4-11.6L3 16l11.6-1.4Z"/></svg></span>Sulus</a>
+    <div class="seg" role="group" aria-label="Язык страницы / Page language">
+      <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="mono" data-i18n="kicker">Открытый инструмент · MIT</div>
+    <h1 data-i18n="title">Нормализатор якутского письма</h1>
+    <p class="lead" data-i18n="lead">Переводит чатовое письмо в стандартную орфографию для поиска, ботов и подготовки данных. Русские слова, латиница и аббревиатуры остаются как есть. Работает в вашем браузере: текст никуда не отправляется.</p>
+
+    <section class="panel" aria-label="Демо">
+      <div class="cols">
+        <div class="col">
+          <label for="src" data-i18n="in">Как написал человек</label>
+          <textarea id="src" spellcheck="false" autocomplete="off" maxlength="5000" placeholder="баьылык кэлбэтэ, сарсын 8йдөөн көр"></textarea>
+        </div>
+        <div class="col">
+          <div class="label" id="out-label" data-i18n="out">Для машины</div>
+          <div class="out empty" id="out" role="region" aria-labelledby="out-label"></div>
+        </div>
+      </div>
+      <div class="bar">
+        <span class="stat" id="stat" aria-live="polite"></span>
+        <button class="btn" type="button" id="copy" disabled data-i18n="copy">Скопировать результат</button>
+      </div>
+    </section>
+
+    <div class="examples">
+      <span class="mono" data-i18n="ex">Примеры</span>
+      <button class="chip" type="button">баьылык кэлбэтэ, сарсын 8йдөөн көр</button>
+      <button class="chip" type="button">оскуолага барда, согус ыарахан</button>
+      <button class="chip" type="button">колодкалар баар дуо? WhatsApp-ка ыыт, ИП Иванов</button>
+      <button class="chip" type="button">Yрдyк сололоох дьону агалбатым</button>
+    </div>
+
+    <div class="grid">
+      <section class="note">
+        <h2 data-i18n="h-machine">Для машин, а не для исправления людей</h2>
+        <p data-i18n="p-machine1">В мессенджерах по-якутски часто пишут без якутской раскладки: «5» вместо <strong>ҕ</strong>, «8» и «о» вместо <strong>ө</strong>, «ь» и «h» вместо <strong>һ</strong>, «у» и «y» вместо <strong>ү</strong>, «н» вместо <strong>ҥ</strong>. Это нормальное живое письмо.</p>
+        <p data-i18n="p-machine2">Поиску, чат-ботам и языковым моделям такие слова узнать труднее: «кун» для них не «күн». Нормализатор делает копию для машины. Человеку её не показывают и его письмо не поправляют.</p>
+        <ul class="rows">
+          <li><span data-i18n="r1k">Как устроен</span><span data-i18n="r1v">Правила замен и частотный словарь 470 тыс. словоформ, без нейросети. Пакет на Python без зависимостей; здесь та же логика на JavaScript.</span></li>
+          <li><span data-i18n="r2k">Что не трогает</span><span data-i18n="r2v">Русские слова и русские с якутскими окончаниями («колодкалар»), латиницу, ссылки, аббревиатуры, числа с единицами.</span></li>
+          <li><span data-i18n="r3k">Ограничения</span><span data-i18n="r3v">Не правит опечатки и пропущенные долгие гласные. Если оба написания настоящие слова, оставляет написанное.</span></li>
+        </ul>
+      </section>
+      <section aria-labelledby="q-title">
+        <h2 id="q-title" data-i18n="h-quality">Качество на открытом тесте</h2>
+        <div class="metrics">
+          <div class="metric">
+            <div class="mono" data-i18n="m1k">Восстановлено</div>
+            <div class="val">95,8%</div>
+            <p data-i18n="m1v">искажённых слов</p>
+          </div>
+          <div class="metric">
+            <div class="mono" data-i18n="m2k">Испорчено</div>
+            <div class="val">0,2%</div>
+            <p data-i18n="m2v">правильных слов</p>
+          </div>
+        </div>
+        <p data-i18n="q-note">1 377 предложений из документов, не вошедших в словарь, с заменами букв по исследованиям Н. А. Леонтьева (2014) и М. Эверстовой и соавт. (2026). В русских фразах не изменено ни одного слова.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <span data-i18n="credit">Словарь: корпуса ailabykt (CC BY 4.0) и Википедия на якутском (CC BY-SA 4.0).</span>
+    <nav>
+      <a href="https://huggingface.co/Sulus-ai/sakha-normalizer" data-i18n="pkg">Пакет и код</a>
+      <a href="https://huggingface.co/datasets/ailabykt/sakha-corpus-mono">ailabykt/sakha-corpus-mono</a>
+      <a href="https://sulus.su">sulus.su</a>
+    </nav>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const I18N = {
+    en: {
+      kicker: 'Open tool · MIT', title: 'Sakha chat-text normalizer',
+      lead: 'Turns chat-style Sakha (Yakut) into standard spelling for search, bots and data preparation. Russian words, Latin script and abbreviations are kept as is. Runs in your browser: the text is not sent anywhere.',
+      in: 'As the person wrote it', out: 'For the machine', copy: 'Copy result', ex: 'Examples',
+      'h-machine': 'For machines, not for correcting people',
+      'p-machine1': 'In messengers Sakha is often typed without a Sakha keyboard: «5» for <strong>ҕ</strong>, «8» and «о» for <strong>ө</strong>, «ь» and «h» for <strong>һ</strong>, «у» and «y» for <strong>ү</strong>, «н» for <strong>ҥ</strong>. This is normal living language.',
+      'p-machine2': 'Search, chatbots and language models struggle with such words: «кун» is not «күн» to them. The normalizer makes a copy for the machine. It is never shown to the person, and nobody gets corrected.',
+      r1k: 'How it works', r1v: 'Substitution rules and a frequency lexicon of 470k word forms, no neural network. A dependency-free Python package; this page runs the same logic in JavaScript.',
+      r2k: 'What it keeps', r2v: 'Russian words, including ones with Sakha suffixes («колодкалар»), Latin script, links, abbreviations, numbers with units.',
+      r3k: 'Limitations', r3v: 'Does not fix typos or dropped long vowels. If both spellings are real words, keeps what was written.',
+      'h-quality': 'Quality on the open test set', m1k: 'Restored', m1v: 'of corrupted words', m2k: 'Damaged', m2v: 'of correct words',
+      'q-note': '1,377 sentences from documents excluded from the lexicon, with letter substitutions following Leontiev (2014) and Everstova et al. (2026). No word changed in Russian sentences.',
+      credit: 'Lexicon: ailabykt corpora (CC BY 4.0) and Sakha Wikipedia (CC BY-SA 4.0).', pkg: 'Package and code',
+      empty: 'The text in standard spelling will appear here', stat: (c, w) => c ? `Changed ${c} of ${w} ${w === 1 ? 'word' : 'words'}` : (w ? 'Nothing to change' : ''),
+      copied: 'Copied', fail: 'The dictionary did not load. Reload the page', was: 'was', loading: 'Loading the dictionary (2.5 MB)…'
+    }
+  };
+  const RU = {};
+  document.querySelectorAll('[data-i18n]').forEach(el => { RU[el.dataset.i18n] = el.innerHTML; });
+  Object.assign(RU, {
+    empty: 'Здесь появится текст в стандартной орфографии',
+    stat: (c, w) => c ? `Заменено ${c} ${plural(c, 'слово', 'слова', 'слов')} из ${w}` : (w ? 'Менять нечего' : ''),
+    copied: 'Скопировано', fail: 'Словарь не загрузился. Обновите страницу', was: 'было', loading: 'Загружаем словарь (2,5 МБ)…'
+  });
+  function plural(n, one, few, many) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+
+  let lang = 'ru';
+  try { if (localStorage.getItem('norm.lang') === 'en') lang = 'en'; } catch (e) {}
+  const t = () => (lang === 'en' ? I18N.en : RU);
+
+  const src = document.getElementById('src');
+  const out = document.getElementById('out');
+  const stat = document.getElementById('stat');
+  const copy = document.getElementById('copy');
+  let last = null, timer = null;
+
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem('norm.lang', l); } catch (e) {}
+    document.documentElement.lang = l;
+    document.title = l === 'en' ? 'Sakha chat-text normalizer · Sulus' : 'Нормализатор якутского письма · Sulus';
+    document.querySelectorAll('[data-i18n]').forEach(el => { const v = t()[el.dataset.i18n]; if (typeof v === 'string') el.innerHTML = v; });
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === l)));
+    render(last);
+  }
+
+  function esc(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  function word(p) {
+    let inner;
+    if (p.from.length === p.text.length) {
+      inner = [...p.text].map((ch, i) => ch === p.from[i] ? esc(ch) : `<b>${esc(ch)}</b>`).join('');
+    } else {
+      inner = `<b>${esc(p.text)}</b>`;
+    }
+    return `<span class="w" title="${t().was}: ${esc(p.from)}">${inner}</span>`;
+  }
+
+  function render(data) {
+    if (!data || !src.value.trim()) {
+      out.classList.add('empty'); out.textContent = t().empty; stat.textContent = ''; copy.disabled = true; return;
+    }
+    out.classList.remove('empty');
+    out.innerHTML = data.pieces.map(p => p.from ? word(p) : esc(p.text)).join('');
+    stat.textContent = t().stat(data.changed, data.words);
+    stat.classList.remove('err');
+    copy.disabled = false;
+  }
+
+  // Нормализатор работает прямо в браузере (Web Worker): текст никуда не отправляется.
+  const worker = new Worker('worker.js');
+  let seq = 0, ready = false;
+  worker.onmessage = ({ data }) => {
+    if (data.type === 'ready') { ready = true; run(); return; }
+    if (data.type === 'error') { stat.textContent = t().fail; stat.classList.add('err'); return; }
+    if (data.id !== seq) return;  // пришёл ответ на старый текст
+    last = data;
+    render(last);
+  };
+
+  function run() {
+    const text = src.value;
+    if (!text.trim()) { last = null; render(null); return; }
+    if (!ready) { out.classList.add('empty'); out.textContent = t().loading; return; }
+    worker.postMessage({ id: ++seq, text });
+  }
+
+  src.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 60); });
+  document.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { src.value = b.textContent; run(); src.focus(); }));
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  copy.addEventListener('click', async () => {
+    if (!last) return;
+    try { await navigator.clipboard.writeText(last.normalized); const prev = copy.textContent; copy.textContent = t().copied; setTimeout(() => { copy.textContent = t().copy; }, 1400); } catch (e) {}
+  });
+
+  setLang(lang);
+  src.value = 'баьылык кэлбэтэ, сарсын 8йдөөн көр';
+  run();
+})();
+</script>
+</body>
+</html>

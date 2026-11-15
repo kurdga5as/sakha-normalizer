@@ -69,10 +69,10 @@ normalize("колодкалар баар дуо? WhatsApp-ка ыыт, ИП Ив
 
 ```bash
 # Через pip напрямую из GitHub:
-pip install git+https://github.com/kurdga5as/sakha-normalizer.git
+pip install git+https://github.com/Sulus-ai/sakha-normalizer.git
 
 # Или клонированием:
-git clone https://github.com/kurdga5as/sakha-normalizer.git
+git clone https://github.com/Sulus-ai/sakha-normalizer.git
 cd sakha-normalizer
 pip install .
 
@@ -92,6 +92,12 @@ from sakha_normalizer import Normalizer
 n = Normalizer()
 n.normalize("...")
 ```
+
+### Демо в браузере
+
+В репозитории есть готовое веб-демо на чистом JavaScript (`demo/index.html`), работающее полностью локально через Web Worker (текст никуда не отправляется):
+- Онлайн-версия в [Hugging Face Spaces](https://huggingface.co/spaces/Sulus-ai/sakha-normalizer-demo)
+- Локально: достаточно запустить любой статический веб-сервер внутри папки `demo/` (например, `python -m http.server 8000 -d demo`) и открыть `http://localhost:8000`.
 
 ### Качество
 
@@ -183,10 +189,10 @@ Rule-based, pure Python standard library, no dependencies.
 
 ```bash
 # Via pip directly from GitHub:
-pip install git+https://github.com/kurdga5as/sakha-normalizer.git
+pip install git+https://github.com/Sulus-ai/sakha-normalizer.git
 
 # Or by cloning:
-git clone https://github.com/kurdga5as/sakha-normalizer.git
+git clone https://github.com/Sulus-ai/sakha-normalizer.git
 cd sakha-normalizer
 pip install .
 
@@ -200,6 +206,12 @@ python -m sakha_normalizer "ба5ар кун учугэй"     # баҕар кү
 
 or copy the `sakha_normalizer/` folder. Loading takes under a second and ~120 MB of RAM;
 create one `Normalizer()` object and reuse it.
+
+### Browser Demo
+
+A self-contained pure JavaScript demo is included in `demo/index.html` (runs locally via Web Worker, sending zero data to external servers):
+- Live demo on [Hugging Face Spaces](https://huggingface.co/spaces/Sulus-ai/sakha-normalizer-demo)
+- Locally: run any static web server (e.g., `python -m http.server 8000 -d demo`) and open `http://localhost:8000`.
 
 ### Quality
 
